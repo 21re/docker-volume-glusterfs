@@ -6,10 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 
-	"github.com/calavera/docker-volume-glusterfs/rest"
+	"github.com/21re/docker-volume-glusterfs/rest"
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
@@ -19,19 +18,23 @@ type volumeName struct {
 }
 
 type glusterfsDriver struct {
-	root       string
-	restClient *rest.Client
-	servers    []string
-	volumes    map[string]*volumeName
-	m          *sync.Mutex
+	root          string
+	restClient    *rest.Client
+	servers       []string
+	glusterfsExec string
+	umountExec    string
+	volumes       map[string]*volumeName
+	m             *sync.Mutex
 }
 
-func newGlusterfsDriver(root, restAddress, gfsBase string, servers []string) glusterfsDriver {
+func newGlusterfsDriver(root, restAddress, gfsBase string, servers []string, glusterfsExec, umountExec string) glusterfsDriver {
 	d := glusterfsDriver{
-		root:    root,
-		servers: servers,
-		volumes: map[string]*volumeName{},
-		m:       &sync.Mutex{},
+		root:          root,
+		servers:       servers,
+		glusterfsExec: glusterfsExec,
+		umountExec:    umountExec,
+		volumes:       map[string]*volumeName{},
+		m:             &sync.Mutex{},
 	}
 	if len(restAddress) > 0 {
 		d.restClient = rest.NewClient(restAddress, gfsBase)
@@ -87,7 +90,7 @@ func (d glusterfsDriver) Path(r volume.Request) volume.Response {
 	return volume.Response{Mountpoint: d.mountpoint(r.Name)}
 }
 
-func (d glusterfsDriver) Mount(r volume.Request) volume.Response {
+func (d glusterfsDriver) Mount(r volume.MountRequest) volume.Response {
 	d.m.Lock()
 	defer d.m.Unlock()
 	m := d.mountpoint(r.Name)
@@ -122,7 +125,7 @@ func (d glusterfsDriver) Mount(r volume.Request) volume.Response {
 	return volume.Response{Mountpoint: m}
 }
 
-func (d glusterfsDriver) Unmount(r volume.Request) volume.Response {
+func (d glusterfsDriver) Unmount(r volume.UnmountRequest) volume.Response {
 	d.m.Lock()
 	defer d.m.Unlock()
 	m := d.mountpoint(r.Name)
@@ -168,13 +171,13 @@ func (d *glusterfsDriver) mountpoint(name string) string {
 }
 
 func (d *glusterfsDriver) mountVolume(name, destination string) error {
-	var serverNodes []string
+	var args []string
 	for _, server := range d.servers {
-		serverNodes = append(serverNodes, fmt.Sprintf("-s %s", server))
+		args = append(args, fmt.Sprintf("-volfile-server=%s", server))
 	}
-
-	cmd := fmt.Sprintf("glusterfs --volfile-id=%s %s %s", name, strings.Join(serverNodes[:], " "), destination)
-	if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
+	args = append(args, fmt.Sprintf("--volfile-id=%s", name))
+	args = append(args, destination)
+	if out, err := exec.Command(d.glusterfsExec, args...).CombinedOutput(); err != nil {
 		log.Println(string(out))
 		return err
 	}
@@ -182,8 +185,7 @@ func (d *glusterfsDriver) mountVolume(name, destination string) error {
 }
 
 func (d *glusterfsDriver) unmountVolume(target string) error {
-	cmd := fmt.Sprintf("umount %s", target)
-	if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
+	if out, err := exec.Command(d.umountExec, target).CombinedOutput(); err != nil {
 		log.Println(string(out))
 		return err
 	}
@@ -191,7 +193,7 @@ func (d *glusterfsDriver) unmountVolume(target string) error {
 }
 
 func (d glusterfsDriver) Capabilities(r volume.Request) volume.Response {
-    var res volume.Response
-    res.Capabilities = volume.Capability{Scope: "local"}
-    return res
+	var res volume.Response
+	res.Capabilities = volume.Capability{Scope: "local"}
+	return res
 }

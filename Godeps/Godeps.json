@@ -1,0 +1,36 @@
+{
+	"ImportPath": "github.com/21re/docker-volume-glusterfs",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/Microsoft/go-winio",
+			"Comment": "v0.3.7",
+			"Rev": "24a3e3d3fc7451805e09d11e11e95d9a0a4f205e"
+		},
+		{
+			"ImportPath": "github.com/docker/go-connections/sockets",
+			"Comment": "v0.2.1-14-geb315e3",
+			"Rev": "eb315e36415380e7c2fdee175262560ff42359da"
+		},
+		{
+			"ImportPath": "github.com/docker/go-plugins-helpers/sdk",
+			"Rev": "65a562254f786ada2d545466185c59e235b7699e"
+		},
+		{
+			"ImportPath": "github.com/docker/go-plugins-helpers/volume",
+			"Rev": "65a562254f786ada2d545466185c59e235b7699e"
+		},
+		{
+			"ImportPath": "golang.org/x/net/proxy",
+			"Rev": "7394c112eae4dba7e96bfcfe738e6373d61772b4"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/windows",
+			"Rev": "7a56174f0086b32866ebd746a794417edbc678a1"
+		}
+	]
+}

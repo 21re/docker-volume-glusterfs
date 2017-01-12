@@ -13,11 +13,13 @@ import (
 const glusterfsID = "_glusterfs"
 
 var (
-	defaultDir  = filepath.Join(volume.DefaultDockerRootDirectory, glusterfsID)
-	serversList = flag.String("servers", "", "List of glusterfs servers")
-	restAddress = flag.String("rest", "", "URL to glusterfsrest api")
-	gfsBase     = flag.String("gfs-base", "/mnt/gfs", "Base directory where volumes are created in the cluster")
-	root        = flag.String("root", defaultDir, "GlusterFS volumes root directory")
+	defaultDir    = filepath.Join(volume.DefaultDockerRootDirectory, glusterfsID)
+	serversList   = flag.String("servers", "", "List of glusterfs servers")
+	restAddress   = flag.String("rest", "", "URL to glusterfsrest api")
+	glusterfsExec = flag.String("glusterfs-exec", "/usr/sbin/glusterfs", "glusterfs client executable")
+	umountExec    = flag.String("umount-exec", "/bin/umount", "umount executable")
+	gfsBase       = flag.String("gfs-base", "/mnt/gfs", "Base directory where volumes are created in the cluster")
+	root          = flag.String("root", defaultDir, "GlusterFS volumes root directory")
 )
 
 func main() {
@@ -34,7 +36,7 @@ func main() {
 
 	servers := strings.Split(*serversList, ":")
 
-	d := newGlusterfsDriver(*root, *restAddress, *gfsBase, servers)
+	d := newGlusterfsDriver(*root, *restAddress, *gfsBase, servers, *glusterfsExec, *umountExec)
 	h := volume.NewHandler(d)
-	fmt.Println(h.ServeUnix("root", "glusterfs"))
+	fmt.Println(h.ServeUnix("glusterfs", 0))
 }
