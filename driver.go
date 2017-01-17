@@ -173,7 +173,7 @@ func (d *glusterfsDriver) mountpoint(name string) string {
 func (d *glusterfsDriver) mountVolume(name, destination string) error {
 	var args []string
 	for _, server := range d.servers {
-		args = append(args, fmt.Sprintf("-volfile-server=%s", server))
+		args = append(args, fmt.Sprintf("--volfile-server=%s", server))
 	}
 	args = append(args, fmt.Sprintf("--volfile-id=%s", name))
 	args = append(args, destination)
