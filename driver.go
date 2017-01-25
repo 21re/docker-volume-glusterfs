@@ -64,6 +64,8 @@ func (d glusterfsDriver) Create(r volume.Request) volume.Response {
 			}
 		}
 	}
+	d.volumes[m] = &volumeName{name: r.Name, connections: 0}
+
 	return volume.Response{}
 }
 
@@ -87,6 +89,7 @@ func (d glusterfsDriver) Remove(r volume.Request) volume.Response {
 }
 
 func (d glusterfsDriver) Path(r volume.Request) volume.Response {
+	log.Printf("Get path of volume: %s", r.Name)
 	return volume.Response{Mountpoint: d.mountpoint(r.Name)}
 }
 
@@ -146,6 +149,7 @@ func (d glusterfsDriver) Unmount(r volume.UnmountRequest) volume.Response {
 }
 
 func (d glusterfsDriver) Get(r volume.Request) volume.Response {
+	log.Printf("Get volume %s", r.Name)
 	d.m.Lock()
 	defer d.m.Unlock()
 	m := d.mountpoint(r.Name)
@@ -153,10 +157,12 @@ func (d glusterfsDriver) Get(r volume.Request) volume.Response {
 		return volume.Response{Volume: &volume.Volume{Name: s.name, Mountpoint: d.mountpoint(s.name)}}
 	}
 
+	log.Print("Error: Volume not found")
 	return volume.Response{Err: fmt.Sprintf("Unable to find volume mounted on %s", m)}
 }
 
 func (d glusterfsDriver) List(r volume.Request) volume.Response {
+	log.Print("List volumes")
 	d.m.Lock()
 	defer d.m.Unlock()
 	var vols []*volume.Volume
